@@ -1,0 +1,162 @@
+{
+  "Resources": {
+    "myTestRepository4FDE1DE7": {
+      "Type": "AWS::CodeCommit::Repository",
+      "Properties": {
+        "RepositoryName": "mytestrepository",
+        "RepositoryDescription": "This is a test repository"
+      }
+    },
+    "myTestRepositoryOnPullRequestStateChangeEventRule8DE35610": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "EventPattern": {
+          "source": [
+            "aws.codecommit"
+          ],
+          "resources": [
+            {
+              "Fn::GetAtt": [
+                "myTestRepository4FDE1DE7",
+                "Arn"
+              ]
+            }
+          ],
+          "detail-type": [
+            "CodeCommit Pull Request State Change"
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "pullRequestBuildLambda961F108E",
+                "Arn"
+              ]
+            },
+            "Id": "Target0"
+          }
+        ]
+      }
+    },
+    "pullRequestBuildLambdaServiceRole788B70EB": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "pullRequestBuildLambda961F108E": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "AssetParametersbdc5b5506807aacaf7d4f6f92546bd6bfa6a33f7116bf5698b4c2d604f7fffe6S3Bucket6A49002B"
+          },
+          "S3Key": {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::Split": [
+                        "||",
+                        {
+                          "Ref": "AssetParametersbdc5b5506807aacaf7d4f6f92546bd6bfa6a33f7116bf5698b4c2d604f7fffe6S3VersionKey037736E1"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "Fn::Select": [
+                    1,
+                    {
+                      "Fn::Split": [
+                        "||",
+                        {
+                          "Ref": "AssetParametersbdc5b5506807aacaf7d4f6f92546bd6bfa6a33f7116bf5698b4c2d604f7fffe6S3VersionKey037736E1"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        },
+        "Handler": "pullRequestBuild.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "pullRequestBuildLambdaServiceRole788B70EB",
+            "Arn"
+          ]
+        },
+        "Runtime": "python3.8"
+      },
+      "DependsOn": [
+        "pullRequestBuildLambdaServiceRole788B70EB"
+      ]
+    },
+    "pullRequestBuildLambdaAllowEventRuletestmyTestRepositoryOnPullRequestStateChangeEventRule8B4BEADB41DE775D": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "pullRequestBuildLambda961F108E",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "myTestRepositoryOnPullRequestStateChangeEventRule8DE35610",
+            "Arn"
+          ]
+        }
+      }
+    }
+  },
+  "Parameters": {
+    "AssetParametersbdc5b5506807aacaf7d4f6f92546bd6bfa6a33f7116bf5698b4c2d604f7fffe6S3Bucket6A49002B": {
+      "Type": "String",
+      "Description": "S3 bucket for asset \"bdc5b5506807aacaf7d4f6f92546bd6bfa6a33f7116bf5698b4c2d604f7fffe6\""
+    },
+    "AssetParametersbdc5b5506807aacaf7d4f6f92546bd6bfa6a33f7116bf5698b4c2d604f7fffe6S3VersionKey037736E1": {
+      "Type": "String",
+      "Description": "S3 key for asset version \"bdc5b5506807aacaf7d4f6f92546bd6bfa6a33f7116bf5698b4c2d604f7fffe6\""
+    },
+    "AssetParametersbdc5b5506807aacaf7d4f6f92546bd6bfa6a33f7116bf5698b4c2d604f7fffe6ArtifactHashBE21F287": {
+      "Type": "String",
+      "Description": "Artifact hash for asset \"bdc5b5506807aacaf7d4f6f92546bd6bfa6a33f7116bf5698b4c2d604f7fffe6\""
+    }
+  }
+}
