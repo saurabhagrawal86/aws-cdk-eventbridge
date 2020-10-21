@@ -12,14 +12,14 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestCdkEventbridgeTest {
+public class TestCdkEventBridgeTest {
     private final static ObjectMapper JSON =
             new ObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, true);
 
     @Test
     public void testStack() throws IOException {
         App app = new App();
-        TestCdkEventbridgeStack stack = new TestCdkEventbridgeStack(app, "test");
+        TestCdkEventBridgeStack stack = new TestCdkEventBridgeStack(app, "test");
 
         // synthesize the stack to a CloudFormation template and compare against
         // a checked-in JSON file.
