@@ -1,45 +1,5 @@
 {
   "Resources": {
-    "myTestRepository4FDE1DE7": {
-      "Type": "AWS::CodeCommit::Repository",
-      "Properties": {
-        "RepositoryName": "mytestrepository",
-        "RepositoryDescription": "This is a test repository"
-      }
-    },
-    "myTestRepositoryOnPullRequestStateChangeEventRule8DE35610": {
-      "Type": "AWS::Events::Rule",
-      "Properties": {
-        "EventPattern": {
-          "source": [
-            "aws.codecommit"
-          ],
-          "resources": [
-            {
-              "Fn::GetAtt": [
-                "myTestRepository4FDE1DE7",
-                "Arn"
-              ]
-            }
-          ],
-          "detail-type": [
-            "CodeCommit Pull Request State Change"
-          ]
-        },
-        "State": "ENABLED",
-        "Targets": [
-          {
-            "Arn": {
-              "Fn::GetAtt": [
-                "pullRequestBuildLambda961F108E",
-                "Arn"
-              ]
-            },
-            "Id": "Target0"
-          }
-        ]
-      }
-    },
     "pullRequestBuildLambdaServiceRole788B70EB": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -125,7 +85,7 @@
         "pullRequestBuildLambdaServiceRole788B70EB"
       ]
     },
-    "pullRequestBuildLambdaAllowEventRuletestmyTestRepositoryOnPullRequestStateChangeEventRule8B4BEADB41DE775D": {
+    "pullRequestBuildLambdaAllowEventRuletestaNewEventRuleBDA9285C191B5078": {
       "Type": "AWS::Lambda::Permission",
       "Properties": {
         "Action": "lambda:InvokeFunction",
@@ -138,10 +98,37 @@
         "Principal": "events.amazonaws.com",
         "SourceArn": {
           "Fn::GetAtt": [
-            "myTestRepositoryOnPullRequestStateChangeEventRule8DE35610",
+            "aNewEventRule33F6D0DC",
             "Arn"
           ]
         }
+      }
+    },
+    "aNewEventRule33F6D0DC": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Event rule for onPullRequestStateChange for any branch",
+        "EventPattern": {
+          "detail-type": [
+            "CodeCommit Pull Request State Change"
+          ],
+          "source": [
+            "aws.codecommit"
+          ]
+        },
+        "Name": "OnPullRequestStateChangeEventRule",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "pullRequestBuildLambda961F108E",
+                "Arn"
+              ]
+            },
+            "Id": "Target0"
+          }
+        ]
       }
     }
   },
