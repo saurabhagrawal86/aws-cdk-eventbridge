@@ -17,15 +17,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class TestCdkEventBridgeStack extends Stack {
+public class CdkEventBridgeStack extends Stack {
 
-    Logger logger = LoggerFactory.getLogger(TestCdkEventBridgeStack.class);
+    Logger logger = LoggerFactory.getLogger(CdkEventBridgeStack.class);
 
-    public TestCdkEventBridgeStack(final Construct scope, final String id) {
+    public CdkEventBridgeStack(final Construct scope, final String id) {
         this(scope, id, null);
     }
 
-    public TestCdkEventBridgeStack(final Construct scope, final String id, final StackProps props) {
+    public CdkEventBridgeStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
 
         logger.info("Creating Lambda [pullRequestBuild]");
