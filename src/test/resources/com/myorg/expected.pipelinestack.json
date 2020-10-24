@@ -8,103 +8,7 @@
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
     },
-    "ImportedRepoPipelineStackmasterReleasePipeline51621D08EventRule282187CC": {
-      "Type": "AWS::Events::Rule",
-      "Properties": {
-        "EventPattern": {
-          "source": [
-            "aws.codecommit"
-          ],
-          "resources": [
-            {
-              "Fn::Join": [
-                "",
-                [
-                  "arn:",
-                  {
-                    "Ref": "AWS::Partition"
-                  },
-                  ":codecommit:",
-                  {
-                    "Ref": "AWS::Region"
-                  },
-                  ":",
-                  {
-                    "Ref": "AWS::AccountId"
-                  },
-                  ":my-new-dummy-repository"
-                ]
-              ]
-            }
-          ],
-          "detail-type": [
-            "CodeCommit Repository State Change"
-          ],
-          "detail": {
-            "event": [
-              "referenceCreated",
-              "referenceUpdated"
-            ],
-            "referenceName": [
-              "master"
-            ]
-          }
-        },
-        "State": "ENABLED",
-        "Targets": [
-          {
-            "Arn": {
-              "Fn::Join": [
-                "",
-                [
-                  "arn:",
-                  {
-                    "Ref": "AWS::Partition"
-                  },
-                  ":codepipeline:",
-                  {
-                    "Ref": "AWS::Region"
-                  },
-                  ":",
-                  {
-                    "Ref": "AWS::AccountId"
-                  },
-                  ":",
-                  {
-                    "Ref": "masterReleasePipelineC66B2D6B"
-                  }
-                ]
-              ]
-            },
-            "Id": "Target0",
-            "RoleArn": {
-              "Fn::GetAtt": [
-                "masterReleasePipelineEventsRole46FE1DA6",
-                "Arn"
-              ]
-            }
-          }
-        ]
-      }
-    },
-    "masterReleaseBuildRoleFF95D8F0": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "codebuild.amazonaws.com"
-              }
-            }
-          ],
-          "Version": "2012-10-17"
-        }
-      }
-    },
-    "masterReleaseBuildRoleDefaultPolicyA676BCE2": {
+    "aCodeBuildEcrReadOnlyRolePolicyB0DCEE0C": {
       "Type": "AWS::IAM::Policy",
       "Properties": {
         "PolicyDocument": {
@@ -267,10 +171,87 @@
           ],
           "Version": "2012-10-17"
         },
-        "PolicyName": "masterReleaseBuildRoleDefaultPolicyA676BCE2",
+        "PolicyName": "aCodeBuildEcrReadOnlyRolePolicyB0DCEE0C",
         "Roles": [
+          "MyCodeBuildEcrReadOnlyRole"
+        ]
+      }
+    },
+    "ImportedRepoPipelineStackmasterReleasePipeline51621D08EventRule282187CC": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "EventPattern": {
+          "source": [
+            "aws.codecommit"
+          ],
+          "resources": [
+            {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":codecommit:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":my-new-dummy-repository"
+                ]
+              ]
+            }
+          ],
+          "detail-type": [
+            "CodeCommit Repository State Change"
+          ],
+          "detail": {
+            "event": [
+              "referenceCreated",
+              "referenceUpdated"
+            ],
+            "referenceName": [
+              "master"
+            ]
+          }
+        },
+        "State": "ENABLED",
+        "Targets": [
           {
-            "Ref": "masterReleaseBuildRoleFF95D8F0"
+            "Arn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":codepipeline:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "masterReleasePipelineC66B2D6B"
+                  }
+                ]
+              ]
+            },
+            "Id": "Target0",
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "masterReleasePipelineEventsRole46FE1DA6",
+                "Arn"
+              ]
+            }
           }
         ]
       }
@@ -341,12 +322,7 @@
           "PrivilegedMode": false,
           "Type": "LINUX_CONTAINER"
         },
-        "ServiceRole": {
-          "Fn::GetAtt": [
-            "masterReleaseBuildRoleFF95D8F0",
-            "Arn"
-          ]
-        },
+        "ServiceRole": "arn:aws:iam::424151071692:role/MyCodeBuildEcrReadOnlyRole",
         "Source": {
           "BuildSpec": "{\n  \"version\": 0.2,\n  \"phases\": {\n    \"install\": {\n      \"runtime-versions\": {\n        \"java\": \"corretto11\",\n        \"docker\": 19\n      }\n    },\n    \"pre_build\": {\n      \"commands\": [\n        \"echo Checking installed maven version\",\n        \"mvn -v\",\n        \"echo Logging into AWS ECR...\",\n        \"aws --version\",\n        \"$(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)\",\n        \"COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)\",\n        \"IMAGE_TAG=${COMMIT_HASH:=latest}\",\n        \"echo ECR Repository URI\",\n        \"echo $ECR_REPOSITORY_URI\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"echo Build started on `date`\",\n        \"echo Building the Docker image...\",\n        \"docker build -t $ECR_REPOSITORY_URI:latest .\",\n        \"docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$IMAGE_TAG\"\n      ]\n    },\n    \"post_build\": {\n      \"commands\": [\n        \"echo Build completed on `date`\",\n        \"echo pushing to repo\",\n        \"docker push $ECR_REPOSITORY_URI:latest\",\n        \"docker push $ECR_REPOSITORY_URI:$IMAGE_TAG\",\n        \"echo Writing image definitions file...\",\n        \"printf '{\\\"ImageURI\\\":\\\"%s\\\"}' $ECR_REPOSITORY_URI:$IMAGE_TAG > imageDefinitions.json\"\n      ]\n    }\n  },\n  \"artifacts\": {\n    \"files\": [\n      \"imageDefinitions.json\"\n    ]\n  }\n}",
           "Type": "CODEPIPELINE"
@@ -451,12 +427,7 @@
               ],
               "Effect": "Allow",
               "Principal": {
-                "AWS": {
-                  "Fn::GetAtt": [
-                    "masterReleaseBuildRoleFF95D8F0",
-                    "Arn"
-                  ]
-                }
+                "AWS": "arn:aws:iam::424151071692:role/MyCodeBuildEcrReadOnlyRole"
               },
               "Resource": "*"
             },
@@ -469,12 +440,7 @@
               ],
               "Effect": "Allow",
               "Principal": {
-                "AWS": {
-                  "Fn::GetAtt": [
-                    "masterReleaseBuildRoleFF95D8F0",
-                    "Arn"
-                  ]
-                }
+                "AWS": "arn:aws:iam::424151071692:role/MyCodeBuildEcrReadOnlyRole"
               },
               "Resource": "*"
             }
@@ -526,6 +492,55 @@
       },
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
+    },
+    "masterReleasePipelineArtifactsBucketPolicy818445D6": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "masterReleasePipelineArtifactsBucket78F6767D"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject*",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::424151071692:role/MyCodeBuildEcrReadOnlyRole"
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "masterReleasePipelineArtifactsBucket78F6767D",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "masterReleasePipelineArtifactsBucket78F6767D",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      }
     },
     "masterReleasePipelineRoleE2E9D068": {
       "Type": "AWS::IAM::Role",

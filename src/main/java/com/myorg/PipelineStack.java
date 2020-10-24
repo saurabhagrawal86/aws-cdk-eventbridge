@@ -35,6 +35,8 @@ import software.amazon.awscdk.services.codepipeline.Pipeline;
 import software.amazon.awscdk.services.codepipeline.StageProps;
 import software.amazon.awscdk.services.codepipeline.actions.CodeBuildAction;
 import software.amazon.awscdk.services.codepipeline.actions.CodeCommitSourceAction;
+import software.amazon.awscdk.services.iam.IRole;
+import software.amazon.awscdk.services.iam.Role;
 import software.constructs.Construct;
 
 public class PipelineStack extends Stack {
@@ -84,6 +86,10 @@ public class PipelineStack extends Stack {
         Map<String, BuildEnvironmentVariable> buildEnvironmentVariableMap = new HashMap<>();
         buildEnvironmentVariableMap.put("ECR_REPOSITORY_URI", variable);
 
+        //Custom role - grant read access from CodeBuild to ECR (ecr:GetAuthorizationToken)
+        IRole roleForCodeBuildReadAccessToEcr = Role.fromRoleArn(this, "aCodeBuildEcrReadOnlyRole",
+                "arn:aws:iam::424151071692:role/MyCodeBuildEcrReadOnlyRole");
+
         //CodeCommit repository
         IRepository codeRepository = Repository.fromRepositoryName(this, "ImportedRepo", CODECOMMIT_REPO_NAME);
 
@@ -93,6 +99,7 @@ public class PipelineStack extends Stack {
                 .buildSpec(BuildSpec.fromObject(masterReleaseBuildSpecificationMap))
                 .environment(BuildEnvironment.builder().buildImage(LinuxBuildImage.AMAZON_LINUX_2_3).build())
                 .environmentVariables(buildEnvironmentVariableMap)
+                .role(roleForCodeBuildReadAccessToEcr)
                 .build();
 
         Artifact sourceOutput = new Artifact();
