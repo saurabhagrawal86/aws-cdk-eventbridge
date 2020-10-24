@@ -32,9 +32,7 @@ public class AwsCdkAppTest {
     public void test_PipelineStack() throws IOException {
         App app = new App();
 
-        LambdaStack lambdaStack = new LambdaStack(app, "LambdaStack");
-        PipelineStack stack = new PipelineStack(app, "PipelineDeployingLambdaStack", lambdaStack.getLambdaCode(),
-                "repositoryName");
+        PipelineStack stack = new PipelineStack(app, "PipelineStack", null);
 
         // synthesize the stack to a CloudFormation template and compare against a checked-in JSON file.
         JsonNode actual = JSON.valueToTree(app.synth().getStackArtifact(stack.getArtifactId()).getTemplate());
