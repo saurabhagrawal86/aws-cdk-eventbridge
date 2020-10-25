@@ -86,7 +86,7 @@ public class PipelineStack extends Stack {
         Map<String, BuildEnvironmentVariable> buildEnvironmentVariableMap = new HashMap<>();
         buildEnvironmentVariableMap.put("ECR_REPOSITORY_URI", variable);
 
-        //Custom role - grant read access from CodeBuild to ECR (ecr:GetAuthorizationToken)
+        //Custom role - grant read access from CodeBuild to ECR (Attach policy: AmazonEC2ContainerRegistryPowerUser)
         IRole roleForCodeBuildReadAccessToEcr = Role.fromRoleArn(this, "aCodeBuildEcrReadOnlyRole",
                 "arn:aws:iam::424151071692:role/MyCodeBuildEcrReadOnlyRole");
 
